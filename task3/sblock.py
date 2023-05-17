@@ -37,7 +37,7 @@ class SBlock:
             0xF: 0xF,
         }
 
-    def s_block_direct(self, input_data):
+    def encrypt(self, input_data):
         """
         Apply the S-box transformation to the input data.
 
@@ -56,7 +56,7 @@ class SBlock:
 
         return output_data
 
-    def s_block_inverse(self, output_data):
+    def decrypt(self, output_data):
         """
         Apply the inverse S-box transformation to the output data.
 
@@ -79,8 +79,8 @@ class SBlock:
 # Example usage
 # s_block = SBlock()
 # input_data = 0b11011010
-# direct_transformed_data = s_block.s_block_direct(input_data)
-# inverse_transformed_data = s_block.s_block_inverse(direct_transformed_data)
+# direct_transformed_data = s_block.encrypt(input_data)
+# inverse_transformed_data = s_block.decrypt(direct_transformed_data)
 
 # print(f"Input Data: {bin(input_data)}")
 # print(f"Direct Transformed Data: {bin(direct_transformed_data)}")
