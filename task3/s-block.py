@@ -1,4 +1,10 @@
 def s_block_direct(input_data):
+    """
+    Apply the S-box transformation to the input data.
+
+    @param input_data: The input data to be transformed.
+    @return: The transformed output data.
+    """
     t1 = input_data >> 4  # Get the first tetrad
     t2 = input_data & 0x0F  # Get the second tetrad
 
@@ -33,6 +39,12 @@ def s_block_direct(input_data):
 
 
 def s_block_inverse(output_data):
+    """
+    Apply the inverse S-box transformation to the output data.
+
+    @param output_data: The output data to be transformed inversely.
+    @return: The inverse transformed input data.
+    """
     t1 = output_data >> 4  # Get the first tetrad
     t2 = output_data & 0x0F  # Get the second tetrad
 
