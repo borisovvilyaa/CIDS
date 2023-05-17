@@ -15,13 +15,21 @@
 ### Приклад виклику програми та запуску 
 
 ```python
+s_block = SBlock()
 input_data = 0b11011010
-direct_transformed_data = s_block_direct(input_data)
-inverse_transformed_data = s_block_inverse(direct_transformed_data)
+direct_transformed_data = s_block.s_block_direct(input_data)
+inverse_transformed_data = s_block.s_block_inverse(direct_transformed_data)
 
 print(f"Input Data: {bin(input_data)}")
 print(f"Direct Transformed Data: {bin(direct_transformed_data)}")
 print(f"Inverse Transformed Data: {bin(inverse_transformed_data)}")
+
 ```
 
 *Приклад результату виконання програми*
+
+```
+Input Data: 0b11011010
+Direct Transformed Data: 0b11011011
+Inverse Transformed Data: 0b11011010
+```
