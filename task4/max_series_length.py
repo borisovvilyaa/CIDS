@@ -1,27 +1,15 @@
+from random import randint
 def max_series_length_test(sequence):
-    zero_series_length = 0
-    one_series_length = 0
-    max_zero_series_length = 0
-    max_one_series_length = 0
-
-    for bit in sequence:
-        if bit == 0:
-            zero_series_length += 1
-            if zero_series_length > max_zero_series_length:
-                max_zero_series_length = zero_series_length
-            one_series_length = 0
-        else:
-            one_series_length += 1
-            if one_series_length > max_one_series_length:
-                max_one_series_length = one_series_length
-            zero_series_length = 0
-
-    if max_zero_series_length > 36 or max_one_series_length > 36:
-        return False
-    else:
-        return True
     
-sequence = [0]
+    count = sequence.count(0)
+    print(count)
+
+    if count > 9654 and  count < 10346:
+        return True
+    else:
+        return False
+    
+sequence = [randint(0,1) for i in range(20001)]
 is_random = max_series_length_test(sequence)
 
 if is_random:
