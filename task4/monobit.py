@@ -1,6 +1,12 @@
 import random
 
 def monobit_test(sequence):
+    """
+    Performs the monobit test on a given sequence of bits.
+
+    @param sequence: The sequence of bits to test.
+    @return: True if the sequence is considered random, False otherwise.
+    """
     count_ones = sequence.count('1')
     
     if 9654 < count_ones < 10346:
