@@ -1,6 +1,6 @@
 import random
 
-def monobit_test(sequence):
+def monobit_test(sequence) -> bool:
     """
     Performs the monobit test on a given sequence of bits.
 

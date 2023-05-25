@@ -1,6 +1,6 @@
 import random
 
-def max_series_length_test(sequence):
+def max_series_length_test(sequence) -> bool:
     """
     Performs the maximum series length test on a given sequence of bits.
 
