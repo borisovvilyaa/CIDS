@@ -1,6 +1,6 @@
 import random
 
-def count_zero_series(sequence):
+def count_zero_series(sequence) -> list:
     """
     Count the number of series of consecutive zeros of different lengths in the given sequence.
 
@@ -23,7 +23,7 @@ def count_zero_series(sequence):
     return series_counts
 
 
-def test_sequence(sequence):
+def test_sequence(sequence) -> bool:
     """
     Test the given sequence for randomness based on the counts of zero series.
 
