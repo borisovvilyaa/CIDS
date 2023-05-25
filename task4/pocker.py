@@ -28,7 +28,7 @@ def poker_test(sequence) -> bool:
 
 sequence = ''.join(random.choices('01', k=20000))
 
-# Performing the monobit test
+# Performing the poker test
 result = poker_test(sequence)
 
 if result:
