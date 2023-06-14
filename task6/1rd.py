@@ -100,3 +100,7 @@ print("s: %s" % s)
 
 valid_signature = el.verify_signature(message, r, s)
 print("Перевірка підпису: %s" % valid_signature)
+message = "Hello world!"
+
+valid_signature = el.verify_signature(message, r, s)
+print("Перевірка зламаного підпису: %s" % valid_signature)
