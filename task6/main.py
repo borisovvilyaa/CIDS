@@ -13,7 +13,7 @@ class ElGamal:
         #Signing the message
         self.k = randint(1, self.p-1)
         self.r = (self.g**self.k)%self.p
-        self.m = 2 # условно, це буде геш, бо в мене геш - це стрінг, а повинен бути для self.s інт
+        self.m = 10 # условно, це буде геш, бо в мене геш - це стрінг, а повинен бути для self.s інт
         self.s = ((self.m - self.a*self.r)*self.k**(-1))%(self.p-1)
         
         #check signature 
@@ -30,7 +30,7 @@ class ElGamal:
         return self.k, self.r, self.s
     
     def check(self):
-        return self.v == self.r
+        return self.v == self.r, self.v, self.r
     # def secondPerson(self):
     #     return self.m, self.k, self.x
     def random_number(self) -> int:
@@ -90,6 +90,6 @@ class ElGamal:
 o = ElGamal()
 print("p %s\ng %s\n" % o.get_parameter())
 print("Private Key %s\nPublic Key %s\n" %o.firstPerson())
-print("k %s (only for debug)\nr %s\ns %s" % o.get_signature())
-print("Check %s" % o.check())
+print("k %s (only for debug)\nr %s\ns %s\n" % o.get_signature())
+print("Check %s\nv %s\ns %s" % o.check())
 # print("'m' is %s\n'k' is %s\n'x' is %s"%o.secondPerson())

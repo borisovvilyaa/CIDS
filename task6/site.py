@@ -38,25 +38,30 @@ def alice():
 
     @return: The public key and Alice's secret key.
     """
-    # Step 1: Choose a prime number p
-    p = random.choice([x for x in range(2, 100) if is_prime(x)])
+    while True:
+            
+        # Step 1: Choose a prime number p
+        p = random.choice([x for x in range(2, 100) if is_prime(x)])
 
-    # Step 2: Choose a primitive root g
-    g = find_primitive_root(p)
+        # Step 2: Choose a primitive root g
+        g = find_primitive_root(p)
 
-    # Step 3: Choose a random secret key x
-    n = p - 1
-    x = random.randint(1, n)
+        if g != None:
+                
+            # Step 3: Choose a random secret key x
+            n = p - 1
+            x = random.randint(1, n)
 
-    # Step 4: Compute the public key y
-    y = pow(g, x, p)
+            # Step 4: Compute the public key y
+            print(g, x, p)
+            y = pow(g, x, p)
 
-    # Step 5: Publish the public key
-    public_key = (p, g, y)
+            # Step 5: Publish the public key
+            public_key = (p, g, y)
 
-    return public_key, x
-
-
+            return public_key, x
+        else:
+            alice()
 # Steps for Bob
 def bob(public_key, m):
     """
@@ -98,13 +103,24 @@ def alice_decrypt(cipher_text, x, p):
 
     return decrypted_message
 
+# alice_public_key, alice_secret_key = alice()
+# print("Alice's Public Key (p, g, y):", alice_public_key)
 
-# Example usage
-alice_public_key, alice_secret_key = alice()
-print("Alice's Public Key (p, g, y):", alice_public_key)
+done_test = 0
+for i in range(1000):
+        print(f"#{i+1}")
+        alice_public_key, alice_secret_key = alice()
+        print("Alice's Public Key (p, g, y):", alice_public_key)
+        bob_cipher_text = bob(alice_public_key, 40)
+        print("Bob's Cipher Text (u, v):", bob_cipher_text)
 
-bob_cipher_text = bob(alice_public_key, 40)
-print("Bob's Cipher Text (u, v):", bob_cipher_text)
+        decrypted_message = alice_decrypt(bob_cipher_text, alice_secret_key, alice_public_key[0])
+        print("Alice's Decrypted Message:", decrypted_message)
+        if decrypted_message == 40:
+            print("Welldone")
+            done_test = done_test+1
+        if i == 9:
+            print("done test")
 
-decrypted_message = alice_decrypt(bob_cipher_text, alice_secret_key, alice_public_key[0])
-print("Alice's Decrypted Message:", decrypted_message)
+
+print(f"{(done_test*100)/1000}% / 100%")
