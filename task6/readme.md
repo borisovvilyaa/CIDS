@@ -15,8 +15,7 @@ s: 2449
 2rd task + 3rd task
 
 ```mathematica
-p: 2741
-ask6/2rd.py
+
 p: 2459
 g: 2
 a: 1175
