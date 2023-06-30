@@ -1,3 +1,3 @@
-module example/user/cids
+module cids
 
 go 1.20

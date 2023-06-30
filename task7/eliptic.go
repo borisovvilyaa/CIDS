@@ -1,4 +1,4 @@
-package main
+package eleptic
 
 import (
 	"fmt"
