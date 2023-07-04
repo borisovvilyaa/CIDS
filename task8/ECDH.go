@@ -52,8 +52,6 @@ func main() {
 	printUserDetails(1, keyPair1)
 	printUserDetails(2, keyPair2)
 
-
-	
 	sharedSecret1 := computeSharedSecret(keyPair1.PrivateKey, keyPair2.PublicKey)
 	sharedSecret2 := computeSharedSecret(keyPair2.PrivateKey, keyPair1.PublicKey)
 
