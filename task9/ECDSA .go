@@ -6,6 +6,7 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
+	"math"
 	"math/rand"
 )
 
@@ -75,74 +76,50 @@ func HashToNumber(hash []byte) uint64 {
 }
 
 func main() {
-	countPoint := 0
 	basePoint := cids.BasePointGGet()
-	countPoint++
-	curveOrder := 256
+	curveOrder := cids.CurveOrderNGet()
+
+	p := 114973
 
 	//1 step. Create key pair
-	privateKey := generatePrivateKey(curveOrder)
+	privateKey := generatePrivateKey(curveOrder - 1)
 	keyPair := KeyPair{
 		PrivateKey: privateKey,
 		PublicKey:  computePublicKey(privateKey, basePoint),
 	}
-	countPoint++
 	printUserDetails(1, keyPair)
 
 	// Signature step.
 
 	input := "Hello, world!"
 	hash := hashData(input)
-
+	number := HashToNumber(hash[:])
 	fmt.Println("Input string:", input)
+	fmt.Printf("SHA256 hash number:%d\n", number)
 	fmt.Printf("SHA256 hash:%s\n\n", hex.EncodeToString(hash[:]))
 
-	nonce := rand.Intn(100)
+	nonce := rand.Intn(cids.CurveOrderNGet())
 	fmt.Printf("Nonce: %d\n\n", nonce)
 
 	point_multiplication := cids.ScalarMult(nonce, cids.BasePointGGet())
-
-	r := point_multiplication.X
-
 	fmt.Printf("Point multiplication: %f\n\n", point_multiplication)
-	countPoint++
 
-	k_inverse := modInverse(nonce, countPoint)
-	number := HashToNumber(hash[:])
-	fmt.Println(number, keyPair.PrivateKey, r, k_inverse)
-	s := (int(number)*keyPair.PrivateKey + int(r)*k_inverse) % countPoint
-	fmt.Printf("Signature: %f, %d\n\n", r, s)
+	r := int(point_multiplication.X) % p
+	s := int(math.Pow(float64(nonce), -1)*float64(int(number)+int(keyPair.PrivateKey)*r)) % p
+	fmt.Println(r, s)
 
 	//verify signature
 
-	s_inverse := modInverse(s, curveOrder)
-	w := s_inverse % curveOrder
-	u1_int := (int(HashToNumber(hash[:])) * w) % curveOrder
-	u2_int := ((int(r) * w) % curveOrder)
-	fmt.Println(u1_int, u2_int)
-	u1 := cids.ScalarMult(u1_int, cids.BasePointGGet())
-	u2 := cids.ScalarMult(u2_int, cids.BasePointGGet())
+	w := int(math.Pow(float64(s), -1)) % p
+	u1 := (int(number) * w) % p
+	u2 := r * w % p
+	x1 := cids.ScalarMult(u1, cids.BasePointGGet())
+	x2 := cids.ScalarMult(u2, keyPair.PublicKey)
 
-	fmt.Println(u1, u2)
-	sumU := cids.AddECPoints(u1, u2)
+	x := cids.AddECPoints(x1, x2)
 
-	fmt.Printf("%v, %f\n", sumU.X, r)
-
-	// verify signature
-	fmt.Print("\n\nVerifying signature\n\n")
-	s_inverse = modInverse(s, curveOrder)
-	w = s_inverse % curveOrder
-	u1_int = (int(HashToNumber(hash[:])) * w) % curveOrder
-	u2_int = ((int(r) * w) % curveOrder)
-	fmt.Println(u1_int, u2_int)
-	u1 = cids.ScalarMult(u1_int, cids.BasePointGGet())
-	u2 = cids.ScalarMult(u2_int, cids.BasePointGGet())
-
-	fmt.Println(u1, u2)
-
-	fmt.Println(u1, u2)
-	point_sum := cids.AddECPoints(u1, u2)
-	fmt.Print(r == point_sum.X, r, point_sum.X)
+	v := int(x.X) % p
+	fmt.Println(v)
 }
 
 // func hashData(input string) [32]byte {
