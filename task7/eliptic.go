@@ -1,119 +1,117 @@
 package eleptic
 
-import (
-	"fmt"
-	"math"
-)
+import "math/big"
 
 type ECPoint struct {
-	X float64
-	Y float64
+	X *big.Int
+	Y *big.Int
 }
 
-// BasePointGGet returns the base point for the elliptic curve.
 func BasePointGGet() (point ECPoint) {
-	return ECPoint{X: 3, Y: 10}
+	point = ECPoint{
+		X: big.NewInt(11570),
+		Y: big.NewInt(42257),
+	}
+	return point
 }
 
-// ECPointGen generates a new point on the elliptic curve with the given coordinates.
-// @param x: X-coordinate of the point.
-// @param y: Y-coordinate of the point.
-// @return point: Generated ECPoint.
-func ECPointGen(x, y float64) (point ECPoint) {
-	return ECPoint{X: x, Y: y}
+func ECPointGen(x, y *big.Int) (point ECPoint) {
+	point = ECPoint{
+		X: x,
+		Y: y,
+	}
+	return point
 }
 
-// IsOnCurveCheck checks if a point is on the elliptic curve.
-// @param a: The ECPoint to be checked.
-// @return c: True if the point is on the curve, false otherwise.
-func IsOnCurveCheck(a ECPoint) (c bool) {
-	// Y^2 = x^3 + X * a + b
-	// where a = 0, b = 7 (EDSA bitcoin curve)
-	roundValueX := math.Sqrt(math.Pow(a.X, 3) + 7)
-	return roundValueX == a.Y
-}
-
-// AddECPoints adds two points on the elliptic curve.
-// @param a: The first ECPoint to be added.
-// @param b: The second ECPoint to be added.
-// @return c: The result of the addition, a new ECPoint.
-func AddECPoints(a, b ECPoint) (c ECPoint) {
-	m := (a.Y - b.Y) / (a.X - b.X)
-	xr := math.Pow(m, 2) - a.X - b.X
-	yr := a.Y + m*(xr-a.X)
-	c = ECPoint{xr, yr}
-	return c
-}
-
-// DoubleECPoints doubles a point on the elliptic curve.
-// @param a: The ECPoint to be doubled.
-// @return c: The result of the doubling, a new ECPoint.
-func DoubleECPoints(a ECPoint) (c ECPoint) {
-	x2 := math.Pow(((3*math.Pow(a.X, 2)+0)/(2*a.Y)), 2) - 2*a.X
-	y2 := -a.Y + ((3*math.Pow(a.X, 2)+0)/(2*a.Y))*(a.X-x2)
-	c = ECPoint{x2, y2}
-	return c
-}
-
-// ScalarMult multiplies a point on the elliptic curve by a scalar value.
-// @param k: The scalar value to multiply the point by.
-// @param a: The ECPoint to be multiplied.
-// @return c: The result of the scalar multiplication, a new ECPoint.
-func ScalarMult(k int, a ECPoint) (c ECPoint) {
-	Xr, Yr := 0.0, 0.0
-
-	for i := 0; i < k; i++ {
-		Xr += a.X
-		Yr += a.Y
+func IsOnCurveCheck(a ECPoint) bool {
+	if a.X == nil || a.Y == nil {
+		return false
 	}
 
-	return ECPointGen(Xr, Yr)
+	left := new(big.Int).Exp(a.Y, big.NewInt(2), nil)
+
+	right := new(big.Int).Exp(a.X, big.NewInt(3), nil)
+	right.Add(right, big.NewInt(1))
+
+	return left.Cmp(right) == 0
 }
 
-// PrintECPoint prints the coordinates of an ECPoint.
-// @param point: The ECPoint to be printed.
-func PrintECPoint(point ECPoint) {
-	fmt.Printf("Point (%f, %f)\n", point.X, point.Y)
+func AddECPoints(a, b ECPoint) (c ECPoint) {
+	sumX := new(big.Int)
+	sumX.Add(a.X, b.X)
+
+	sumY := new(big.Int)
+	sumY.Add(a.Y, b.Y)
+
+	return ECPoint{
+		X: sumX,
+		Y: sumY,
+	}
 }
 
-// IsEqual checks if two ECPoints are equal.
-// @param pointFirst: The first ECPoint.
-// @param pointSecond: The second ECPoint.
-// @return bool: True if the points are equal, false otherwise.
-func IsEqual(pointFirst ECPoint, pointSecond ECPoint) bool {
-	return pointFirst.X == pointSecond.X && pointFirst.Y == pointSecond.Y
+func DoubleECPoints(a ECPoint) (c ECPoint) {
+	sumX := new(big.Int)
+	sumX.Add(a.X, a.X)
+
+	sumY := new(big.Int)
+	sumY.Add(a.Y, a.Y)
+
+	return ECPoint{
+		X: sumX,
+		Y: sumY,
+	}
+}
+func IsEqual(a, b ECPoint) bool {
+	return a.X.Cmp(b.X) == 0 && a.Y.Cmp(b.Y) == 0
 }
 
-func main() {
-	//create base point
-	G := ECPoint{}
-	G = BasePointGGet()
-	fmt.Printf("Base point is: (%f, %f)\n", G.X, G.Y)
+func ScalarMult(k big.Int, a ECPoint) ECPoint {
+	if a.X == nil || a.Y == nil {
+		return ECPoint{}
+	}
 
-	P := ECPoint{}
-	P = ECPointGen(1, math.Sqrt(8)) // I found this Y when I was solving on paper
-	fmt.Printf("Gen point: (%f, %f)\n", P.X, P.Y)
+	result := ECPoint{
+		X: new(big.Int),
+		Y: new(big.Int),
+	}
 
-	fmt.Println("Point P is on curve:", IsOnCurveCheck(P))
+	result.X.SetInt64(0)
+	result.Y.SetInt64(0)
 
-	fmt.Println("Add point", AddECPoints(P, G))
+	binaryK := k.Text(2)
 
-	fmt.Println("Duble point", DoubleECPoints(P))
-	fmt.Println("Scalar Mult", ScalarMult(5, P))
+	for i := 0; i < len(binaryK); i++ {
+		result = AddECPoints(result, result)
 
-	PrintECPoint(G)
+		if binaryK[i] == '1' {
+			result = AddECPoints(result, a)
+		}
+	}
 
-	// G := ECPoint{}
-	// G = BasePointGGet()
-	// fmt.Printf("Base point is: (%f, %f)\n", G.X, G.Y)
-	// d := 3
-	// k := 5
-
-	// H1 := ScalarMult(d, G)
-	// H2 := ScalarMult(k, H1)
-
-	// H3 := ScalarMult(k, G)
-	// H4 := ScalarMult(d, H3)
-
-	// fmt.Println(IsEqual(H2, H4))
+	return result
 }
+
+func MultiplyECPoint(k big.Int, a ECPoint) ECPoint {
+	result := ECPoint{}
+
+	if a.X == nil || a.Y == nil {
+		return result
+	}
+
+	currentPoint := a
+
+	for i := k.BitLen() - 1; i >= 0; i-- {
+		currentPoint = DoubleECPoints(currentPoint)
+
+		if k.Bit(i) == 1 {
+			currentPoint = AddECPoints(currentPoint, a)
+		}
+	}
+
+	result.X = new(big.Int).Set(currentPoint.X)
+	result.Y = new(big.Int).Set(currentPoint.Y)
+
+	return result
+}
+
+
