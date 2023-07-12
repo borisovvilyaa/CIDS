@@ -3,31 +3,32 @@ package main
 import (
 	cids "cids/task7"
 	"fmt"
+	"math/big"
 	"math/rand"
 )
 
 type KeyPair struct {
-	PrivateKey int
+	PrivateKey big.Int
 	PublicKey  cids.ECPoint
 }
 
-func generatePrivateKey(curveOrder int) int {
+func generatePrivateKey(curveOrder int) *big.Int {
 
-	return rand.Intn(curveOrder)
+	return big.NewInt(rand.Int63n(int64(curveOrder)))
 }
 
-func computePublicKey(privateKey int, basePoint cids.ECPoint) cids.ECPoint {
+func computePublicKey(privateKey big.Int, basePoint cids.ECPoint) cids.ECPoint {
 	return cids.ScalarMult(privateKey, basePoint)
 }
 
-func computeSharedSecret(privateKey int, publicKey cids.ECPoint) cids.ECPoint {
+func computeSharedSecret(privateKey big.Int, publicKey cids.ECPoint) cids.ECPoint {
 	return cids.ScalarMult(privateKey, publicKey)
 }
 
 func printUserDetails(user int, keyPair KeyPair) {
 	fmt.Printf("User %d:\n", user)
-	fmt.Printf("Private Key: %d\n", keyPair.PrivateKey)
-	fmt.Printf("Public Key: (%f, %f)\n\n", keyPair.PublicKey.X, keyPair.PublicKey.Y)
+	fmt.Printf("Private Key: %v\n", keyPair.PrivateKey.String())
+	fmt.Printf("Public Key: (%v, %v)\n\n", keyPair.PublicKey.X, keyPair.PublicKey.Y)
 }
 
 func main() {
@@ -38,15 +39,15 @@ func main() {
 	//first key
 	privateKey1 := generatePrivateKey(curveOrder)
 	keyPair1 := KeyPair{
-		PrivateKey: privateKey1,
-		PublicKey:  computePublicKey(privateKey1, basePoint),
+		PrivateKey: *privateKey1,
+		PublicKey:  computePublicKey(*privateKey1, basePoint),
 	}
 
 	//second key
 	privateKey2 := generatePrivateKey(curveOrder)
 	keyPair2 := KeyPair{
-		PrivateKey: privateKey2,
-		PublicKey:  computePublicKey(privateKey2, basePoint),
+		PrivateKey: *privateKey2,
+		PublicKey:  computePublicKey(*privateKey2, basePoint),
 	}
 
 	printUserDetails(1, keyPair1)
@@ -57,7 +58,7 @@ func main() {
 
 	if cids.IsEqual(sharedSecret1, sharedSecret2) {
 		fmt.Println("Shared secret successfully computed:")
-		fmt.Printf("A common secret: %f\n", sharedSecret1.X)
+		fmt.Printf("A common secret: %v\n", sharedSecret1.X)
 	} else {
 		fmt.Println("Error: Shared secrets do not match")
 	}
