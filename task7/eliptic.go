@@ -113,5 +113,3 @@ func MultiplyECPoint(k big.Int, a ECPoint) ECPoint {
 
 	return result
 }
-
-

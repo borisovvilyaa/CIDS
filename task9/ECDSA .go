@@ -1,193 +1,174 @@
 package main
 
 import (
-	cids "cids/task7"
+	elliptic "cids/task7"
 	"crypto/sha256"
-	"encoding/binary"
 	"encoding/hex"
 	"fmt"
-	"math"
+	"math/big"
 	"math/rand"
+	"strings"
 )
 
+type Signature struct {
+	r *big.Int
+	s *big.Int
+}
+
 type KeyPair struct {
-	PrivateKey int
-	PublicKey  cids.ECPoint
+	PrivateKey *big.Int
+	PublicKey  elliptic.ECPoint
 }
 
-type signature struct {
-	firstElement  int
-	secondElement cids.ECPoint
-}
+const n = 11400000
 
-func generatePrivateKey(curveOrder int) int {
-	for {
-		n := rand.Intn(curveOrder)
-		if n != 0 {
-			return rand.Intn(curveOrder)
-		}
+func GenerateKey() KeyPair {
+	sk := big.NewInt(int64(rand.Intn(n - 1)))
+
+	return KeyPair{
+		PrivateKey: sk,
+		PublicKey:  elliptic.ScalarMult(*sk, elliptic.BasePointGGet()),
 	}
 }
 
-func computePublicKey(privateKey int, basePoint cids.ECPoint) cids.ECPoint {
-	return cids.ScalarMult(privateKey, basePoint)
+func PrintKeyPair(key KeyPair) {
+	fmt.Printf("Public Key: (%v, %v) \n", key.PublicKey.X, key.PublicKey.Y)
+	fmt.Println("Private Key: ", key.PrivateKey)
 }
 
-func printUserDetails(user int, keyPair KeyPair) {
-	fmt.Printf("User %d:\n", user)
-	fmt.Printf("Private Key: %d\n", keyPair.PrivateKey)
-	fmt.Printf("Public Key: (%f, %f)\n\n", keyPair.PublicKey.X, keyPair.PublicKey.Y)
-}
+func CreateSignature(key KeyPair, message *big.Int) Signature {
+	k := big.NewInt(int64(rand.Intn(n - 1)))
+	kG := elliptic.ScalarMult(*k, elliptic.BasePointGGet())
 
-func hashData(input string) [32]byte {
-	bytes := []byte(input)
-	hash := sha256.Sum256(bytes)
-	return hash
-}
-func modInverse(a, m int) int {
-	if m == 0 {
-		return 0
+	r := new(big.Int).Mod(kG.X, big.NewInt(n))
+	s := new(big.Int).ModInverse(k, big.NewInt(n))
+	s.Add(message, new(big.Int).Mul(key.PrivateKey, r))
+	s.Mod(s, big.NewInt(n))
+
+	return Signature{
+		r: r,
+		s: s,
 	}
-
-	g := gcdExtended(a, m)
-	if g < 0 {
-		g += m
-	}
-
-	return g
 }
 
-func gcdExtended(a, b int) int {
-	if a == 0 {
-		return b
-	}
-
-	gcd := gcdExtended(b%a, a)
-	x := gcdExtended(b%a, a)
-
-	return x - (b/a)*gcd
+func PrintSignature(signature Signature) {
+	fmt.Printf("r: %v\n", signature.r)
+	fmt.Printf("s: %v\n", signature.s)
 }
 
-func HashToNumber(hash []byte) uint64 {
-	// Хеш SHA256 имеет размер 32 байта (256 бит)
-	// Мы будем преобразовывать первые 8 байт хеша в число типа uint64
-	number := binary.BigEndian.Uint64(hash[:8])
-	return number
+func VerifySignature(key KeyPair, message *big.Int, signature Signature) bool {
+	w := new(big.Int).ModInverse(big.NewInt(n), signature.s)
+	w.Mod(w, big.NewInt(n))
+
+	u1 := new(big.Int).Mul(message, w)
+	u1.Mod(u1, big.NewInt(n))
+
+	u2 := new(big.Int).Mul(signature.r, w)
+	u2.Mod(u1, big.NewInt(n))
+
+	xVerify := elliptic.AddECPoints(elliptic.ScalarMult(*u1, elliptic.BasePointGGet()), elliptic.ScalarMult(*u2, key.PublicKey))
+
+	v := new(big.Int).Mod(xVerify.X, big.NewInt(n))
+
+	return v.Cmp(signature.r) == 0
+}
+
+func SerializePrivateKey(key *big.Int) string {
+	return key.String()
+}
+
+func DeserializePrivateKey(data string) (*big.Int, error) {
+	key := new(big.Int)
+	_, success := key.SetString(data, 10)
+	if !success {
+		return nil, fmt.Errorf("failed to deserialize private key")
+	}
+	return key, nil
+}
+
+func SerializePublicKey(key elliptic.ECPoint) string {
+	x := key.X.String()
+	y := key.Y.String()
+	return x + "," + y
+}
+
+func DeserializePublicKey(data string) (elliptic.ECPoint, error) {
+	var key elliptic.ECPoint
+	parts := strings.Split(data, ",")
+	if len(parts) != 2 {
+		return key, fmt.Errorf("invalid public key format")
+	}
+	x := new(big.Int)
+	y := new(big.Int)
+	_, success1 := x.SetString(parts[0], 10)
+	_, success2 := y.SetString(parts[1], 10)
+	if !success1 || !success2 {
+		return key, fmt.Errorf("failed to deserialize public key")
+	}
+	key.X = x
+	key.Y = y
+	return key, nil
+}
+
+func SerializeSignature(signature Signature) string {
+	r := signature.r.Bytes()
+	s := signature.s.Bytes()
+	data := append(r, s...)
+	return hex.EncodeToString(data)
+}
+
+func DeserializeSignature(data string) (Signature, error) {
+	signature := Signature{}
+	bytes, err := hex.DecodeString(data)
+	if err != nil {
+		return signature, fmt.Errorf("failed to deserialize signature")
+	}
+	rSize := (len(bytes) + 1) / 2
+	rBytes := bytes[:rSize]
+	sBytes := bytes[rSize:]
+	signature.r = new(big.Int).SetBytes(rBytes)
+	signature.s = new(big.Int).SetBytes(sBytes)
+	return signature, nil
 }
 
 func main() {
-	basePoint := cids.BasePointGGet()
-	curveOrder := cids.CurveOrderNGet()
+	keys := GenerateKey()
+	PrintKeyPair(keys)
+	message := sha256.Sum256([]byte("Hello, world!"))
+	messageInt := new(big.Int).SetBytes(message[:])
 
-	p := 114973
+	signature := CreateSignature(keys, messageInt)
+	PrintSignature(signature)
 
-	//1 step. Create key pair
-	privateKey := generatePrivateKey(curveOrder - 1)
-	keyPair := KeyPair{
-		PrivateKey: privateKey,
-		PublicKey:  computePublicKey(privateKey, basePoint),
+	serializedPrivateKey := SerializePrivateKey(keys.PrivateKey)
+	serializedPublicKey := SerializePublicKey(keys.PublicKey)
+	serializedSignature := SerializeSignature(signature)
+
+	fmt.Println("Serialized Private Key:", serializedPrivateKey)
+	fmt.Println("Serialized Public Key:", serializedPublicKey)
+	fmt.Println("Serialized Signature:", serializedSignature)
+
+	deserializedPrivateKey, err := DeserializePrivateKey(serializedPrivateKey)
+	if err != nil {
+		fmt.Println("Failed to deserialize private key:", err)
+		return
 	}
-	printUserDetails(1, keyPair)
 
-	// Signature step.
+	deserializedPublicKey, err := DeserializePublicKey(serializedPublicKey)
+	if err != nil {
+		fmt.Println("Failed to deserialize public key:", err)
+		return
+	}
 
-	input := "Hello, world!"
-	hash := hashData(input)
-	number := HashToNumber(hash[:])
-	fmt.Println("Input string:", input)
-	fmt.Printf("SHA256 hash number:%d\n", number)
-	fmt.Printf("SHA256 hash:%s\n\n", hex.EncodeToString(hash[:]))
+	deserializedSignature, err := DeserializeSignature(serializedSignature)
+	if err != nil {
+		fmt.Println("Failed to deserialize signature:", err)
+		return
+	}
 
-	nonce := rand.Intn(cids.CurveOrderNGet())
-	fmt.Printf("Nonce: %d\n\n", nonce)
+	fmt.Println("Deserialized Private Key:", deserializedPrivateKey)
+	fmt.Println("Deserialized Public Key:", deserializedPublicKey)
+	fmt.Println("Deserialized Signature:", deserializedSignature)
 
-	point_multiplication := cids.ScalarMult(nonce, cids.BasePointGGet())
-	fmt.Printf("Point multiplication: %f\n\n", point_multiplication)
-
-	r := int(point_multiplication.X) % p
-	s := int(math.Pow(float64(nonce), -1)*float64(int(number)+int(keyPair.PrivateKey)*r)) % p
-	fmt.Println(r, s)
-
-	//verify signature
-
-	w := int(math.Pow(float64(s), -1)) % p
-	u1 := (int(number) * w) % p
-	u2 := r * w % p
-	x1 := cids.ScalarMult(u1, cids.BasePointGGet())
-	x2 := cids.ScalarMult(u2, keyPair.PublicKey)
-
-	x := cids.AddECPoints(x1, x2)
-
-	v := int(x.X) % p
-	fmt.Println(v)
+	fmt.Println("Signature Verification:", VerifySignature(KeyPair{PrivateKey: deserializedPrivateKey, PublicKey: deserializedPublicKey}, messageInt, deserializedSignature))
 }
-
-// func hashData(input string) [32]byte {
-// 	bytes := []byte(input)
-// 	hash := sha256.Sum256(bytes)
-// 	return hash
-// }
-
-// func generateBlindingPoint(nonce int, basePoint cids.ECPoint) cids.ECPoint {
-// 	return cids.ScalarMult(nonce, basePoint)
-// }
-
-// func generateSignature(privateKey, nonce int, hash [32]byte, blindingPoint cids.ECPoint, countPoint int) signature {
-// 	firstComp := (int(blindingPoint.X) + privateKey) % countPoint
-// 	secondComp := cids.ScalarMult(int(binary.BigEndian.Uint32(hash[:4]))/(privateKey)/(nonce), blindingPoint)
-// 	return signature{
-// 		firstElement:  firstComp,
-// 		secondElement: secondComp,
-// 	}
-// }
-
-// func 	verifySignature(input string, hash [32]byte, signature signature, keyPair KeyPair, countPoint int) bool {
-// 	Q := cids.AddECPoints(cids.ScalarMult(int(signature.secondElement.Y), cids.BasePointGGet()), cids.ScalarMult(signature.firstElement, keyPair.PublicKey))
-// 	fmt.Println(signature.firstElement, int(Q.X))
-// 	return signature.firstElement == int(Q.X)
-// }
-
-// func main() {
-// 	countPoint := 0
-// 	basePoint := cids.BasePointGGet()
-// 	countPoint++
-// 	curveOrder := 256
-
-// 	privateKey := generatePrivateKey(curveOrder)
-// 	keyPair := KeyPair{
-// 		PrivateKey: privateKey,
-// 		PublicKey:  computePublicKey(privateKey, basePoint),
-// 	}
-// 	countPoint++
-
-// 	printUserDetails(1, keyPair)
-
-// 	input := "Hello, world!"
-// 	hash := hashData(input)
-
-// 	fmt.Println("Input string:", input)
-// 	fmt.Printf("SHA256 hash:%s\n\n", hex.EncodeToString(hash[:]))
-
-// 	nonce := rand.Intn(100)
-// 	fmt.Printf("Nonce: %d\n\n", nonce)
-
-// 	blindingPoint := generateBlindingPoint(nonce, basePoint)
-// 	countPoint++
-// 	fmt.Printf("Blinding point: (%f, %f)\n\n", blindingPoint.X, blindingPoint.Y)
-
-// 	fmt.Printf("Count Point: %d\n\n", countPoint)
-
-// 	signature := generateSignature(privateKey, nonce, hash, blindingPoint, countPoint)
-// 	fmt.Printf("First Component: %d\n\n", signature.firstElement)
-// 	fmt.Println("Second Component:", signature.secondElement)
-
-// 	fmt.Printf("\n\n-------Verify-------\n\n")
-
-// 	inputverify := "Hello, world!"
-// 	hashverify := hashData(input)
-
-// 	fmt.Println("Input string:", inputverify)
-// 	fmt.Printf("SHA256 hash:%s\n\n", hex.EncodeToString(hashverify[:]))
-
-// 	fmt.Println(verifySignature(input, hashverify, signature, keyPair, countPoint))
-// }
