@@ -23,8 +23,33 @@
 5. Обчислює спільний секрет для обох користувачів, використовуючи їхні закриті та відкритий ключі.
 6. Перевіряє, чи збігаються обчислені спільні секрети за допомогою **cids.IsEqual()**.
 7. Друкує результат спільного секретного обчислення.
-
 По коду:
 - Наскільки правильно робити 2 функції `computePublicKey` та `computeSharedSecret` з одним і тим же кодом - я не знаю. З точки зору юзабільності для сторонніх людей - окей, але з точки кодстайлу не окей. То ж, все для людей, залишив 2 функції ¯\_(ツ)_/¯
 
 - Я повністю переписав бібліотеку elliptic, тому переробив код на big.Int. До цього воно працювало так же, але з поміткою, що були прості int, float і так далі.
+## UPD
+TEST'S
+
+With big number in private key 
+
+``` bash
+> go test .\task8\  -run TestSharedSecretComparisonBig -v
+=== RUN   TestSharedSecretComparisonBig
+--- PASS: TestSharedSecretComparisonBig (0.00s)
+PASS
+ok      cids/task8      0.024s
+
+```
+
+With small numbers
+``` bash
+
+=== RUN   TestSharedSecretComparisonSmall
+--- PASS: TestSharedSecretComparisonSmall (0.00s)
+PASS
+ok      cids/task8      0.024s
+
+```
+
+P.S це досить дивно, що код з великими значеннями sk працює так само, як і з маленькими 
+
