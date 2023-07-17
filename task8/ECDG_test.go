@@ -14,8 +14,8 @@ func TestSharedSecretComparisonBig(t *testing.T) {
 
 	privateKey1 := big.NewInt(999999999999999999)
 	privateKey2 := big.NewInt(999999999999999991)
-	publicKey1 := computePublicKey(*privateKey1, basePoint)
-	publicKey2 := computePublicKey(*privateKey2, basePoint)
+	publicKey1 := computeSharedSecret(*privateKey1, basePoint)
+	publicKey2 := computeSharedSecret(*privateKey2, basePoint)
 
 	sharedSecret1 := computeSharedSecret(*privateKey1, publicKey2)
 	sharedSecret2 := computeSharedSecret(*privateKey2, publicKey1)
@@ -24,6 +24,7 @@ func TestSharedSecretComparisonBig(t *testing.T) {
 		t.Error("Shared secrets should not be equal")
 	}
 }
+
 // TestSharedSecretComparisonSmall tests the comparison of shared secrets using small numbers.
 
 func TestSharedSecretComparisonSmall(t *testing.T) {
@@ -31,8 +32,8 @@ func TestSharedSecretComparisonSmall(t *testing.T) {
 
 	privateKey1 := big.NewInt(1)
 	privateKey2 := big.NewInt(2)
-	publicKey1 := computePublicKey(*privateKey1, basePoint)
-	publicKey2 := computePublicKey(*privateKey2, basePoint)
+	publicKey1 := computeSharedSecret(*privateKey1, basePoint)
+	publicKey2 := computeSharedSecret(*privateKey2, basePoint)
 
 	sharedSecret1 := computeSharedSecret(*privateKey1, publicKey2)
 	sharedSecret2 := computeSharedSecret(*privateKey2, publicKey1)

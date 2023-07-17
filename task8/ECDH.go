@@ -17,9 +17,6 @@ func generatePrivateKey(curveOrder int) *big.Int {
 	return big.NewInt(rand.Int63n(int64(curveOrder)))
 }
 
-func computePublicKey(privateKey big.Int, basePoint cids.ECPoint) cids.ECPoint {
-	return cids.ScalarMult(privateKey, basePoint)
-}
 
 func computeSharedSecret(privateKey big.Int, publicKey cids.ECPoint) cids.ECPoint {
 	return cids.ScalarMult(privateKey, publicKey)
@@ -40,14 +37,14 @@ func main() {
 	privateKey1 := generatePrivateKey(curveOrder)
 	keyPair1 := KeyPair{
 		PrivateKey: *privateKey1,
-		PublicKey:  computePublicKey(*privateKey1, basePoint),
+		PublicKey:  computeSharedSecret(*privateKey1, basePoint),
 	}
 
 	//second key
 	privateKey2 := generatePrivateKey(curveOrder)
 	keyPair2 := KeyPair{
 		PrivateKey: *privateKey2,
-		PublicKey:  computePublicKey(*privateKey2, basePoint),
+		PublicKey:  computeSharedSecret(*privateKey2, basePoint),
 	}
 
 	printUserDetails(1, keyPair1)
